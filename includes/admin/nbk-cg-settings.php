@@ -33,6 +33,11 @@ return apply_filters(
 			'type'  => 'text',
 		],
 
+        'user_id'                     => [
+            'title' => __( 'Nbk-CG User Id', 'woocommerce-gateway-nbk-cg' ),
+            'type'  => 'text',
+        ],
+
 		'testmode'                            => [
 			'title'       => __( 'Test mode', 'woocommerce-gateway-nbk-cg' ),
 			'label'       => __( 'Enable Test Mode', 'woocommerce-gateway-nbk-cg' ),

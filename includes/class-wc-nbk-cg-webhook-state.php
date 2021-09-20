@@ -30,14 +30,14 @@ class WC_Nbk_Cg_Webhook_State {
 	const VALIDATION_FAILED_SIGNATURE_MISMATCH = 'signature_mismatch';
 
 	/**
-	 * Gets whether Stripe is in test mode or not
+	 * Gets whether Nbk is in test mode or not
 	 *
 	 * @since 5.0.0
 	 * @return bool
 	 */
 	public static function get_testmode() {
-		$stripe_settings = get_option( 'woocommerce_nbk_cg_settings', [] );
-		return ( ! empty( $stripe_settings['testmode'] ) && 'yes' === $stripe_settings['testmode'] ) ? true : false;
+		$nbk_settings = get_option( 'woocommerce_nbk_cg_settings', [] );
+		return ( ! empty( $nbk_settings['testmode'] ) && 'yes' === $nbk_settings['testmode'] ) ? true : false;
 	}
 
 	/**
@@ -144,7 +144,7 @@ class WC_Nbk_Cg_Webhook_State {
 		}
 
 		if ( self::VALIDATION_FAILED_USER_AGENT_INVALID == $last_error ) {
-			return( __( 'The webhook received did not come from Stripe', 'woocommerce-gateway-nbk-cg' ) );
+			return( __( 'The webhook received did not come from Nbk', 'woocommerce-gateway-nbk-cg' ) );
 		}
 
 		if ( self::VALIDATION_FAILED_SIGNATURE_INVALID == $last_error ) {

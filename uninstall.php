@@ -40,4 +40,3 @@ if ( defined( 'WC_REMOVE_ALL_DATA' ) && true === WC_REMOVE_ALL_DATA ) {
     delete_option( 'wc_nbk_cg_show_styles_notice' );
     delete_option( 'wc_nbk_cg_show_request_api_notice' );
 }
-

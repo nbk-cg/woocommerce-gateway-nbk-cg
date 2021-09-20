@@ -119,6 +119,8 @@ class WC_Gateway_Nbk_Cg_Paypal extends WC_Nbk_Cg_Payment_Gateway
         $this->statement_descriptor = ! empty( $main_settings['statement_descriptor'] ) ? $main_settings['statement_descriptor'] : '';
 
         $this->account_id       = ! empty( $main_settings['account_id'] ) ? $main_settings['account_id'] : '';
+        $this->user_id           = ! empty( $main_settings['user_id'] ) ? $main_settings['user_id'] : '';
+
         $this->regions           = ! empty( $main_settings['regions'] ) ? $main_settings['regions'] : '';
 
         if ( $this->testmode ) {
@@ -129,6 +131,8 @@ class WC_Gateway_Nbk_Cg_Paypal extends WC_Nbk_Cg_Payment_Gateway
         WC_Nbk_Cg_API::set_client_id( $this->client_id );
         WC_Nbk_Cg_API::set_client_secret( $this->client_secret );
 
+        add_action( 'check_nbkpaypal', array( $this, 'check_response') );
+
         // Save settings
         if ( is_admin() ) {
             // Versions over 2.0
@@ -138,7 +142,7 @@ class WC_Gateway_Nbk_Cg_Paypal extends WC_Nbk_Cg_Payment_Gateway
         //add_action('woocommerce_update_options_payment_gateways_' . $this->id, [$this, 'process_admin_options']);
         add_action('wp_enqueue_scripts', [$this, 'payment_scripts']);
 
-        add_action( 'check_nbkpaypal', array( $this, 'check_response') );
+       // add_action( 'check_nbkpaypal', array( $this, 'check_response') );
     }
 
     /**
@@ -454,4 +458,16 @@ class WC_Gateway_Nbk_Cg_Paypal extends WC_Nbk_Cg_Payment_Gateway
         }
         return;
     }
+
+    function check_for_woopaypal() {
+        if( isset($_GET['nbkpaypal'])) {
+            // Start the gateways
+            WC()->payment_gateways();
+
+            do_action( 'check_woopaypal' );
+        }
+
+    }
+
+
 }

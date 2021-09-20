@@ -14,13 +14,12 @@ class WC_Nbk_Cg_API {
 	 * Nbk-Cg API Endpoint
 	 */
 	//const ENDPOINT           = 'https://wallet-payment-svc-x6fr3lwlgq-nw.a.run.app';
-    const CARD_ENDPOINT      = 'https://46a6-213-41-75-134.ngrok.io';
-    const MOBILE_ENDPOINT    = 'https://46a6-213-41-75-134.ngrok.io';
+    const CARD_ENDPOINT      = 'https://wallet-payment-svc-x6fr3lwlgq-nw.a.run.app';
+    const MOBILE_ENDPOINT    = 'https://mobile-payment-svc-x6fr3lwlgq-ew.a.run.app';
 	const NBK_CG_API_VERSION = '2019-09-09';
 
 	const MOBILE_PAYMENT =  ['MTN', 'ORANGE-MONEY', 'ALIPAY'];
     const CARD_PAYMENT =  ['STRIPE', 'PAYPAL'];
-
 
 	const TOKEN_URL = "https://nbk-wallet.auth.eu-west-1.amazoncognito.com/oauth2/token";
 

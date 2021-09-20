@@ -3,61 +3,6 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-function woomomo_adds_to_the_head() {
-
-    wp_enqueue_script('Callbacks', plugins_url(
-        'assets/js/mtn/load.js', WC_NBK_CG_MAIN_FILE ), array('jquery'));
-    wp_enqueue_style( 'Responses', plugins_url('assets/css/mtn/style.css', WC_NBK_CG_MAIN_FILE),
-        false,'1.1','all');
-
-}
-//Add the css and js files to the header.
-add_action( 'wp_enqueue_scripts', 'woomomo_adds_to_the_head' );
-
-
-add_action( 'init', function() {
-    /** Add a custom path and set a custom query argument. */
-    add_rewrite_rule( '^/payment/?([^/]*)/?', 'index.php?payment_action=1', 'top' );
-} );
-
-
-
-add_filter( 'query_vars', function( $query_vars ) {
-    $query_vars []= 'payment_action';
-
-    return $query_vars;
-} );
-
-add_action( 'wp', function() {
-//var_dump(get_query_var( 'payment_action' ));die();
-    /** This is an call for our custom action. */
-    if ( get_query_var( 'payment_action' ) ) {
-        var_dump('$query_vars');
-        // your code here
-        mtn_payment_request();
-    }
-} );
-
-
-//Request payment function end
-//Results scanner function start
-add_action( 'init', function() {
-
-    add_rewrite_rule( '^/scanner/?([^/]*)/?', 'index.php?scanner_action=1', 'top' );
-} );
-add_filter( 'query_vars', function( $query_vars ) {
-
-    $query_vars []= 'scanner_action';
-    return $query_vars;
-} );
-
-add_action( 'wp', function() {
-
-    if ( get_query_var( 'scanner_action' ) ) {
-        // invoke scanner function
-        mtn_scan_transactions();
-    }
-} );
 
 /**
  * Class that handles MTN payment method.
@@ -205,7 +150,6 @@ class WC_Gateway_Nbk_Cg_Mtn extends WC_Nbk_Cg_Payment_Gateway {
         } else {
             add_action('woocommerce_update_options_payment_gateways', array(&$this, 'process_admin_options'));
         }
-        add_action( 'woocommerce_receipt_mtn',[ $this, 'receipt_page' ]);
     }
 
     public function is_test_mode() {
@@ -311,50 +255,8 @@ class WC_Gateway_Nbk_Cg_Mtn extends WC_Nbk_Cg_Payment_Gateway {
      * Receipt Page
      **/
     public function receipt_page( $order_id ) {
-die('iiii');
+
         echo $this->generate_iframe( $order_id );
-    }
-
-
-
-    /**
-     * Function that posts the params to momo and generates the html for the page
-     */
-    public function generate_iframe( $order_id ) {
-        var_dump('frf');die();
-        // $this->mtn_payment_request();
-        global $woocommerce;
-        $order = new WC_Order ( $order_id );
-        $_SESSION['total'] = (int)$order->order_total;
-        $tel = $order->billing_phone;
-        //cleanup the phone number and remove unecessary symbols
-        $tel = str_replace("-", "", $tel);
-        $tel = str_replace( array(' ', '<', '>', '&', '{', '}', '*', "+", '!', '@', '#', "$", '%', '^', '&'), "", $tel );
-
-        $_SESSION['tel'] = substr($tel, -11);
-
-
-        /**
-         * Make the payment here by clicking on pay button and confirm by clicking on complete order button
-         */
-        if ($_GET['transactionType']=='checkout') {
-
-            echo "<h4>Payment Instructions:</h4>";
-            echo "
-		  1. Click on the <b>Pay</b> button in order to initiate the MTN Mobile Money payment.<br/>
-		  2. Check your mobile phone for a prompt requesting authorization of payment.<br/>
-    	  3. Authorize the payment and it will be deducted from your MTN Mobile Money balance.<br/>  	
-    	  4. After receiving the MTN Mobile Money payment confirmation message please click on the <b>Complete Order</b> button below to complete the order and confirm the payment made.<br/>";
-            echo "<br/>";?>
-
-            <input type="hidden" value="" id="txid"/>
-            <?php echo $_SESSION['response_status']; ?>
-            <div id="commonname"></div>
-            <button onClick="pay()" id="pay_btn">Pay</button>
-            <button onClick="complete()" id="complete_btn">Complete Order</button>
-            <?php
-            echo "<br/>";
-        }
     }
 
 
@@ -380,24 +282,6 @@ die('iiii');
             $total = $order->get_total();
         }
 
-
-
-        /* echo '<div
-              class="mobile-money-qr-payment"
-              data-api-user-id="8ad7c789-0c28-48a3-be48-3dbca347d7e"
-              data-amount="' . esc_attr( WC_Nbk_Cg_Helper::get_nbk_cg_amount( $total ) ) . '"
-              data-currency="' . esc_attr(get_woocommerce_currency() ) . '"
-             >
-             ';*/
-
-        /* echo '<div
-               class="mobile-money-qr-payment"
-               data-api-user-id="89e6dbf0-6e61-4aa9-8366-b69f7b69fd44"
-               data-amount="300"
-               data-currency="' . esc_attr(get_woocommerce_currency() ) . '"
-               data-external-id="6121301776b04277bb6d5a73"
-                   >';*/
-        //</div>
 
         if ( $description ) {
             echo apply_filters( 'wc_nbk_cg_description', wpautop( wp_kses_post( $description ) ), $this->id );
@@ -547,31 +431,3 @@ die('iiii');
 }
 
 
-function mtn_payment_request() {
-
-    $var = new WC_Gateway_Nbk_Cg_Mtn();
-
-    $params = $var->cash_in_params();
-
-    $dataResponse = WC_Nbk_Cg_API::request_cash_in(
-        $params,
-        $var->get_cash_in_url()
-    );
-    //var_dump($dataResponse['status']);die();
-
-    if (isset($dataResponse['status']) && $dataResponse['status'] ===  "success") {
-        echo json_encode(array("rescode" => "0", "resmsg" => "Request accepted for processing, please authorize the transaction"));
-    } else {
-        echo json_encode(array("rescode" => $dataResponse['status'], "resmsg" => "Payment request failed, please try again"));
-    }
-
-    exit();
-
-}
-
-function  mtn_scan_transactions(){
-
-    echo json_encode(array("rescode" => "9999", "resmsg" => "Payment status confirmation has been disabled, please request for the Pro Version"));
-
-    exit();
-}

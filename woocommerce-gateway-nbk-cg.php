@@ -101,19 +101,6 @@ function woocommerce_gateway_nbk_cg() {
                 return self::$instance;
             }
 
-            /**
-             * Nbk cg Connect API
-             *
-             * @var WC_Nbk_Cg_Connect_API
-             */
-            private $api;
-
-            /**
-             * Nbk cg Connect
-             *
-             * @var WC_Nbk_Cg_Connect
-             */
-            public $connect;
 
             /**
              * Nbk cg Payment Request configurations.
@@ -146,12 +133,7 @@ function woocommerce_gateway_nbk_cg() {
                 add_action( 'admin_init', [ $this, 'install' ] );
 
                 $this->init();
-
-                $this->api                           = new WC_Nbk_Cg_Connect_API();
-                $this->connect                       = new WC_Nbk_Cg_Connect( $this->api );
                 $this->payment_request_configuration = new wc_nbk_cg_payment_request();
-
-                add_action( 'rest_api_init', [ $this, 'register_connect_routes' ] );
             }
 
             /**
@@ -172,7 +154,6 @@ function woocommerce_gateway_nbk_cg() {
                 require_once dirname( __FILE__ ) . '/includes/abstracts/abstract-wc-nbk-cg-payment-gateway.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-webhook-state.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-webhook-handler.php';
-                require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-apple-pay-registration.php';
                 require_once dirname( __FILE__ ) . '/includes/compat/class-wc-nbk-cg-pre-orders-compat.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-gateway-nbk-cg.php';
                 require_once dirname( __FILE__ ) . '/includes/payment-methods/class-wc-gateway-nbk-cg-alipay.php';
@@ -181,8 +162,6 @@ function woocommerce_gateway_nbk_cg() {
                 require_once dirname( __FILE__ ) . '/includes/payment-methods/class-wc-nbk-cg-payment-request.php';
                 require_once dirname( __FILE__ ) . '/includes/compat/class-wc-nbk-cg-subs-compat.php';
                 require_once dirname( __FILE__ ) . '/includes/compat/class-wc-nbk-cg-woo-compat-utils.php';
-                require_once dirname( __FILE__ ) . '/includes/connect/class-wc-nbk-cg-connect.php';
-                require_once dirname( __FILE__ ) . '/includes/connect/class-wc-nbk-cg-connect-api.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-order-handler.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-payment-tokens.php';
                 require_once dirname( __FILE__ ) . '/includes/class-wc-nbk-cg-customer.php';
@@ -193,8 +172,7 @@ function woocommerce_gateway_nbk_cg() {
                     require_once dirname( __FILE__ ) . '/includes/admin/class-wc-nbk-cg-admin-notices.php';
                 }
 
-                // REMOVE IN THE FUTURE.
-                require_once dirname( __FILE__ ) . '/includes/deprecated/class-wc-nbk-cg-apple-pay.php';
+
 
                 add_filter( 'woocommerce_payment_gateways', [ $this, 'add_gateways' ] );
                 add_filter( 'pre_update_option_woocommerce_Nbk_Cg_settings', [ $this, 'gateway_settings_update' ], 10, 2 );
@@ -357,21 +335,7 @@ function woocommerce_gateway_nbk_cg() {
                 return $email_classes;
             }
 
-            /**
-             * Register Nbk Cg connect rest routes.
-             */
-            public function register_connect_routes() {
 
-                require_once WC_NBK_CG_PLUGIN_PATH . '/includes/abstracts/abstract-wc-nbk-cg-connect-rest-controller.php';
-                require_once WC_NBK_CG_PLUGIN_PATH . '/includes/connect/class-wc-nbk-cg-connect-rest-oauth-init-controller.php';
-                require_once WC_NBK_CG_PLUGIN_PATH . '/includes/connect/class-wc-nbk-cg-connect-rest-oauth-connect-controller.php';
-
-                $oauth_init    = new WC_Nbk_Cg_Connect_REST_Oauth_Init_Controller( $this->connect, $this->api );
-                $oauth_connect = new WC_Nbk_Cg_Connect_REST_Oauth_Connect_Controller( $this->connect, $this->api );
-
-                $oauth_init->register_routes();
-                $oauth_connect->register_routes();
-            }
         }
 
         $plugin = WC_nbk_cg::get_instance();

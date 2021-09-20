@@ -1,7 +1,9 @@
 // A reference to Stripe.js
 var stripe;
 // Disable the button until we have Stripe set up on the page
-window.addEventListener('load', () => {
+jQuery( function( $ ) {
+  'use strict';
+
   // document.querySelector(".nbk-button").disabled = true;
   document.querySelector("button[name='woocommerce_checkout_place_order']").disabled = true;
 
@@ -25,33 +27,14 @@ window.addEventListener('load', () => {
         document.querySelector("button[name='woocommerce_checkout_place_order']").disabled = false;
 
         // Handle form submission.
-        //var form = document.getElementById("payment-form");
         var form = document.querySelector("form[name='checkout']");
-        //form = document.getElementsByClassName("woocommerce-checkout");
 
-        form.addEventListener("submit", function(event) {
-          event.preventDefault();
-          // Initiate payment when the submit button is clicked
-          // var formdata = jQuery(".woocommerce-checkout").serialize();
+        jQuery('form[name="checkout"]').on('submit', function(e){
 
-          var newArrayEmpTyFields = [];
 
-          var formdata = jQuery(".woocommerce-checkout").serialize();
-          var res = queryConvert(formdata);
-
-          for (var key in res) {
-            var value = res[key];
-
-            if (value === '' && key in fields()) {
-              newArrayEmpTyFields.push(fields()[key])
-            }
-          }
-
-          if (newArrayEmpTyFields.length) {
-            showErrorInvalidFieldForm(newArrayEmpTyFields);
-          }else {
             pay(stripe, card, clientSecret);
-          }
+            e.preventDefault();
+
         });
       });
 
@@ -104,6 +87,7 @@ window.addEventListener('load', () => {
           if (result.error) {
             // Show error to your customer
             showError(result.error.message);
+
           } else {
             // The payment has been processed!
             orderComplete(clientSecret);
@@ -122,28 +106,41 @@ window.addEventListener('load', () => {
 
       // processPayment();
 
-      /* var form = document.getElementsByName("checkout");
-       form.submit();*/
-      /*form.addEventListener('submit', (event) => {
-        // handle the form data
-      });*/
-
-      /*document.querySelector(".sr-payment-form").classList.add("hidden");
-      document.querySelector("pre").textContent = paymentIntentJson;
-
-      document.querySelector(".sr-result").classList.remove("hidden");
-      setTimeout(function() {
-        document.querySelector(".sr-result").classList.add("expand");
-      }, 200);*/
-
-      //changeLoadingState(false);
     });
   };
 
   var showError = function(errorMsgText) {
-    //changeLoadingState(false);
     var errorMsg = document.querySelector(".sr-field-error");
     errorMsg.textContent = errorMsgText;
+
+
+    var form = document.querySelector("form[name='checkout']");
+
+    form.prepend( '<div class="woocommerce-NoticeGroup woocommerce-NoticeGroup-checkout">' + errorMsg.textContent + '</div>' );
+
+    var selector = '';
+
+    if ( $( '#add_payment_method' ).length ) {
+      selector = $( '#add_payment_method' );
+    }
+
+    if ( $( '#order_review' ).length ) {
+      selector = $( '#order_review' );
+    }
+
+    if ( $( 'form.checkout' ).length ) {
+      selector = $( 'form.checkout' );
+    }
+
+    if ( selector.length ) {
+      $( 'html, body' ).animate({
+        scrollTop: ( selector.offset().top - 100 )
+      }, 500 );
+    }
+
+    $( document.body ).trigger( 'checkout_error' );
+
+
     setTimeout(function() {
       errorMsg.textContent = "";
     }, 4000);
@@ -161,7 +158,7 @@ window.addEventListener('load', () => {
     setTimeout(function() {
       errorMsg.textContent = "";
     }, 8000);
-  }
+  };
 
 // Show a spinner on payment submission
   var changeLoadingState = function(isLoading) {
@@ -191,11 +188,11 @@ window.addEventListener('load', () => {
         console.log("Error, credit card not valid, for example");
       }
     });
-  }
+  };
 
   var queryConvert = function(queryStr){
-    queryArr = queryStr.replace('?','').split('&'),
-        queryParams = [];
+    var  queryArr = queryStr.replace('?','').split('&');
+     var queryParams = [];
 
     for (var q = 0, qArrLength = queryArr.length; q < qArrLength; q++) {
       var qArr = queryArr[q].split('=');

@@ -6,7 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * Class WC_Nbk_Cg_Webhook_Handler.
  *
- * Handles webhooks from Stripe on sources that are not immediately chargeable.
+ * Handles webhooks from NBK on sources that are not immediately chargeable.
  *
  * @since 4.0.0
  */
@@ -40,12 +40,12 @@ class WC_Nbk_Cg_Webhook_Handler extends WC_Nbk_Cg_Payment_Gateway {
 	 */
 	public function __construct() {
 		$this->retry_interval = 2;
-		$stripe_settings      = get_option( 'woocommerce_nbk_cg_settings', [] );
-		$this->testmode       = ( ! empty( $stripe_settings['testmode'] ) && 'yes' === $stripe_settings['testmode'] ) ? true : false;
+        $nbk_settings      = get_option( 'woocommerce_nbk_cg_settings', [] );
+		$this->testmode       = ( ! empty( $nbk_settings['testmode'] ) && 'yes' === $nbk_settings['testmode'] ) ? true : false;
 		$secret_key           = ( $this->testmode ? 'test_' : '' ) . 'webhook_secret';
-		$this->secret         = ! empty( $stripe_settings[ $secret_key ] ) ? $stripe_settings[ $secret_key ] : false;
+		$this->secret         = ! empty( $nbk_settings[ $secret_key ] ) ? $nbk_settings[ $secret_key ] : false;
 
-		add_action( 'woocommerce_api_wc_stripe', [ $this, 'check_for_webhook' ] );
+		add_action( 'woocommerce_api_wc_nbk', [ $this, 'check_for_webhook' ] );
 
 		// Get/set the time we began monitoring the health of webhooks by fetching it.
 		// This should be roughly the same as the activation time of the version of the
@@ -54,7 +54,7 @@ class WC_Nbk_Cg_Webhook_Handler extends WC_Nbk_Cg_Payment_Gateway {
 	}
 
 	/**
-	 * Check incoming requests for Stripe Webhook data and process them.
+	 * Check incoming requests for NBK Webhook data and process them.
 	 *
 	 * @since 4.0.0
 	 * @version 5.0.0
@@ -96,8 +96,8 @@ class WC_Nbk_Cg_Webhook_Handler extends WC_Nbk_Cg_Payment_Gateway {
 	 *
 	 * @since 4.0.0
 	 * @version 5.0.0
-	 * @param array $request_headers The request headers from Stripe.
-	 * @param array $request_body    The request body from Stripe.
+	 * @param array $request_headers The request headers from NBK.
+	 * @param array $request_body    The request body from NBK.
 	 * @return string The validation result (e.g. self::VALIDATION_SUCCEEDED )
 	 */
 	public function validate_request( $request_headers, $request_body ) {
@@ -141,11 +141,11 @@ class WC_Nbk_Cg_Webhook_Handler extends WC_Nbk_Cg_Payment_Gateway {
 	 *
 	 * @since 5.0.0
 	 * @version 5.0.0
-	 * @param array $request_headers The request headers from Stripe.
+	 * @param array $request_headers The request headers from NBK.
 	 * @return string The validation result (e.g. self::VALIDATION_SUCCEEDED )
 	 */
 	private function validate_request_user_agent( $request_headers ) {
-		$ua_is_valid = empty( $request_headers['USER-AGENT'] ) || preg_match( '/Stripe/', $request_headers['USER-AGENT'] );
+		$ua_is_valid = empty( $request_headers['USER-AGENT'] ) || preg_match( '/Nbk/', $request_headers['USER-AGENT'] );
 		$ua_is_valid = apply_filters( 'wc_Nbk_Cg_webhook_is_user_agent_valid', $ua_is_valid, $request_headers );
 
 		return $ua_is_valid ? WC_Nbk_Cg_Webhook_State::VALIDATION_SUCCEEDED : WC_Nbk_Cg_Webhook_State::VALIDATION_FAILED_USER_AGENT_INVALID;

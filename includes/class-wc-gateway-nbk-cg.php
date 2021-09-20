@@ -143,6 +143,7 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 		$this->payment_request      = 'yes' === $this->get_option( 'payment_request', 'yes' );
 
         $this->account_id       = $this->get_option( 'account_id');
+        $this->user_id           = $this->get_option( 'user_id');
         //$this->test_client_id   = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'test_client_id' );
         //$this->test_client_secret   = $this->testmode ? $this->get_option( 'test_client_secret' ) : $this->get_option( 'test_client_secret' );
         $this->client_id        = $this->testmode ? $this->get_option( 'test_client_id' ) : $this->get_option( 'client_id');
@@ -304,30 +305,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 		ob_end_flush();
 	}
 
-    /*public function validate_fields(){
-
-        if( empty( $_POST[ 'cardnumber' ]) ) {
-            wc_add_notice(  'cardnumber  is required!', 'error' );
-            return false;
-        }
-
-        if( empty( $_POST[ 'exp-date' ]) ) {
-            wc_add_notice(  'exp-date is required!', 'error' );
-            return false;
-        }
-
-        if( empty( $_POST[ 'cvc' ]) ) {
-            wc_add_notice(  'cvc is required!', 'error' );
-            return false;
-        }
-
-        if( empty( $_POST[ 'zipcode' ]) ) {
-            wc_add_notice(  'First name is required!', 'error' );
-            return false;
-        }
-        return true;
-
-    }*/
 
 	/**
 	 * Renders the Nbk-cg elements form.
@@ -431,15 +408,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 			}
 		}
 
-		$sepa_elements_options = apply_filters(
-			'wc_Nbk_Cg_sepa_elements_options',
-			[
-				'supportedCountries' => [ 'SEPA' ],
-				'placeholderCountry' => WC()->countries->get_base_country(),
-				'style'              => [ 'base' => [ 'fontSize' => '15px' ] ],
-			]
-		);
-
 		$nbk_cg_params['nbk_cg_locale']             = WC_Nbk_Cg_Helper::convert_wc_locale_to_Nbk_Cg_locale( get_locale() );
 		$nbk_cg_params['no_prepaid_card_msg']       = __( 'Sorry, we\'re not accepting prepaid cards at this time. Your credit card has not been charged. Please try with alternative payment method.', 'woocommerce-gateway-nbk-cg' );
 		$nbk_cg_params['payment_intent_error']      = __( 'We couldn\'t initiate the payment. Please try again.', 'woocommerce-gateway-nbk-cg' );
@@ -464,6 +432,13 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 
 		return $nbk_cg_params;
 	}
+
+    function add_jscript_checkout() {
+        global $wp;
+        if ( is_checkout() && empty( $wp->query_vars['order-pay'] ) && ! isset( $wp->query_vars['order-received'] ) ) {
+            echo '<script>paste your script here!</script>';
+        }
+    }
 
 	/**
 	 * Payment_scripts function.
@@ -504,8 +479,8 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 			return;
 		}*/
 
-        wp_register_style( 'nbk-cg-styles-normalize', plugins_url( 'assets/css/stripe/normalize.css', WC_NBK_CG_MAIN_FILE ), [], WC_NBK_CG_VERSION );
-        wp_register_style( 'nbk-cg-styles-global', plugins_url( 'assets/css/stripe/global.css', WC_NBK_CG_MAIN_FILE ), [], WC_NBK_CG_VERSION );
+        wp_register_style( 'nbk-cg-styles-normalize', plugins_url( 'assets/css/card/normalize.css', WC_NBK_CG_MAIN_FILE ), [], WC_NBK_CG_VERSION );
+        wp_register_style( 'nbk-cg-styles-global', plugins_url( 'assets/css/card/global.css', WC_NBK_CG_MAIN_FILE ), [], WC_NBK_CG_VERSION );
 		wp_enqueue_style( 'nbk-cg-styles-normalize');
         wp_enqueue_style( 'nbk-cg-styles-global' );
 
@@ -515,7 +490,7 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
         );
 
         wp_register_script( 'woocommerce_nbk_cg', plugins_url(
-               'assets/js/stripe/script.js', WC_NBK_CG_MAIN_FILE ),
+               'assets/js/card/script.js', WC_NBK_CG_MAIN_FILE ),
             [], WC_NBK_CG_VERSION, false);
 
         wp_localize_script(
@@ -572,7 +547,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 
         update_option('webhook_debug', $_GET);
     }
-
 
 
 	/**
@@ -674,28 +648,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 		}
 	}
 
-	/**
-	 * Saves payment method
-	 *
-	 * @param object $source_object
-	 * @throws WC_Nbk_Cg_Exception
-	 */
-	public function save_payment_method( $source_object ) {
-		$user_id  = get_current_user_id();
-		$customer = new WC_Nbk_Cg_Customer( $user_id );
-
-		if ( ( $user_id && 'reusable' === $source_object->usage ) ) {
-			$response = $customer->add_source( $source_object->id );
-
-			if ( ! empty( $response->error ) ) {
-				throw new WC_Nbk_Cg_Exception( print_r( $response, true ), $this->get_localized_error_message_from_response( $response ) );
-			}
-			if ( is_wp_error( $response ) ) {
-				throw new WC_Nbk_Cg_Exception( $response->get_error_message(), $response->get_error_message() );
-			}
-		}
-	}
-
 
 	/**
 	 * Generates a localized message for an error from a response.
@@ -718,67 +670,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 		return $localized_message;
 	}
 
-
-
-	/**
-	 * Retries the payment process once an error occured.
-	 *
-	 * @since 4.2.0
-	 * @param object   $response          The response from the Nbk-cg API.
-	 * @param WC_Order $order             An order that is being paid for.
-	 * @param bool     $retry             A flag that indicates whether another retry should be attempted.
-	 * @param bool     $force_save_source Force save the payment source.
-	 * @param mixed    $previous_error    Any error message from previous request.
-	 * @param bool     $use_order_source  Whether to use the source, which should already be attached to the order.
-	 * @throws WC_Nbk_Cg_Exception        If the payment is not accepted.
-	 * @return array|void
-	 */
-	public function retry_after_error( $response, $order, $retry, $force_save_source, $previous_error, $use_order_source ) {
-		if ( ! $retry ) {
-			$localized_message = __( 'Sorry, we are unable to process your payment at this time. Please retry later.', 'woocommerce-gateway-nbk-cg' );
-			$order->add_order_note( $localized_message );
-			throw new WC_Nbk_Cg_Exception( print_r( $response, true ), $localized_message ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.
-		}
-
-		// Don't do anymore retries after this.
-		if ( 5 <= $this->retry_interval ) {
-			return $this->process_payment( $order->get_id(), false, $force_save_source, $response->error, $previous_error );
-		}
-
-		sleep( $this->retry_interval );
-		$this->retry_interval++;
-
-		return $this->process_payment( $order->get_id(), true, $force_save_source, $response->error, $previous_error, $use_order_source );
-	}
-
-	/**
-	 * Adds the necessary hooks to modify the "Pay for order" page in order to clean
-	 * it up and prepare it for the Nbk-cg PaymentIntents modal to confirm a payment.
-	 *
-	 * @since 4.2
-	 * @param WC_Payment_Gateway[] $gateways A list of all available gateways.
-	 * @return WC_Payment_Gateway[]          Either the same list or an empty one in the right conditions.
-	 */
-	public function prepare_order_pay_page( $gateways ) {
-		if ( ! is_wc_endpoint_url( 'order-pay' ) || ! isset( $_GET['wc-nbk-cg-confirmation'] ) ) { // wpcs: csrf ok.
-			return $gateways;
-		}
-
-		try {
-			$this->prepare_intent_for_order_pay_page();
-		} catch ( WC_Nbk_Cg_Exception $e ) {
-			// Just show the full order pay page if there was a problem preparing the Payment Intent
-			return $gateways;
-		}
-
-		add_filter( 'woocommerce_checkout_show_terms', '__return_false' );
-		add_filter( 'woocommerce_pay_order_button_html', '__return_false' );
-		add_filter( 'woocommerce_available_payment_gateways', '__return_empty_array' );
-		add_filter( 'woocommerce_no_available_payment_methods_message', [ $this, 'change_no_available_methods_message' ] );
-		add_action( 'woocommerce_pay_order_after_submit', [ $this, 'render_payment_intent_inputs' ] );
-
-		return [];
-	}
 
 	/**
 	 * Changes the text of the "No available methods" message to one that indicates
@@ -805,9 +696,6 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 
 		return preg_replace( '~</(\w+)>\s*$~', "$error_wrapper</$1>", $html );
 	}
-
-
-
 
 
 	/**
@@ -867,39 +755,4 @@ class WC_Gateway_Nbk_Cg extends WC_Nbk_Cg_Payment_Gateway {
 			update_option( 'wc_Nbk_Cg_show_changed_keys_notice', 'yes' );
 		}
 	}
-
-	public function validate_publishable_key_field( $key, $value ) {
-		$value = $this->validate_text_field( $key, $value );
-		if ( ! empty( $value ) && ! preg_match( '/^pk_live_/', $value ) ) {
-			throw new Exception( __( 'The "Live Publishable Key" should start with "pk_live", enter the correct key.', 'woocommerce-gateway-nbk-cg' ) );
-		}
-		return $value;
-	}
-
-	public function validate_secret_key_field( $key, $value ) {
-		$value = $this->validate_text_field( $key, $value );
-		if ( ! empty( $value ) && ! preg_match( '/^[rs]k_live_/', $value ) ) {
-			throw new Exception( __( 'The "Live Secret Key" should start with "sk_live" or "rk_live", enter the correct key.', 'woocommerce-gateway-nbk-cg' ) );
-		}
-		return $value;
-	}
-
-	public function validate_test_publishable_key_field( $key, $value ) {
-		$value = $this->validate_text_field( $key, $value );
-		if ( ! empty( $value ) && ! preg_match( '/^pk_test_/', $value ) ) {
-			throw new Exception( __( 'The "Test Publishable Key" should start with "pk_test", enter the correct key.', 'woocommerce-gateway-nbk-cg' ) );
-		}
-		return $value;
-	}
-
-	public function validate_test_secret_key_field( $key, $value ) {
-		$value = $this->validate_text_field( $key, $value );
-		if ( ! empty( $value ) && ! preg_match( '/^[rs]k_test_/', $value ) ) {
-			throw new Exception( __( 'The "Test Secret Key" should start with "sk_test" or "rk_test", enter the correct key.', 'woocommerce-gateway-nbk-cg' ) );
-		}
-		return $value;
-	}
-
-
-
 }
