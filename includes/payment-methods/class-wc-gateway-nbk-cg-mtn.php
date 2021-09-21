@@ -297,7 +297,8 @@ class WC_Gateway_Nbk_Cg_Mtn extends WC_Nbk_Cg_Payment_Gateway {
             'currency'                  => get_woocommerce_currency(),
             'originator'                => [
                 'originatorType'  => "MobileNumber",
-                'originatorId'    => $params['phoneNumber']
+                'originatorId'    => $this->user_id ,
+                'mobileNumber'    => $params['phoneNumber']
             ],
             'description'               => 'Products payment',
             'regions'                   => [$this->regions],
